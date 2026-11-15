@@ -10,6 +10,7 @@ import { Eleitor } from '../eleitor/entities/eleitor.entity';
 import { Eleicao } from '../eleicao/entities/eleicao.entity';
 import { InscricaoEleitor } from '../inscricao-eleitor/entities/inscricao-eleitor.entity';
 import { Candidatura } from '../candidatura/entities/candidatura.entity';
+import { VotoController } from './voto.controller';
 
 @Module({
   imports: [
@@ -24,5 +25,6 @@ import { Candidatura } from '../candidatura/entities/candidatura.entity';
   ],
   providers: [VotoService],
   exports: [VotoService],
+  controllers: [VotoController],
 })
 export class VotoModule {}
