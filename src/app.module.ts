@@ -18,6 +18,7 @@ import { VotoModule } from './modules/voto/voto.module';
 import { AuthModule } from './modules/auth/auth.module';
 import 'dotenv/config';
 import { ConfigModule } from '@nestjs/config';
+import { ResultadoModule } from './modules/resultado/resultado.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { ConfigModule } from '@nestjs/config';
     ControleVotacaoModule,
     VotoModule,
     AuthModule,
+    ResultadoModule,
   ],
   controllers: [AppController],
   providers: [AppService, ControleVotacaoService],
