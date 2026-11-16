@@ -130,3 +130,30 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Docker para desenvolvimento
+
+O projeto usa Node.js 26.13.0 e npm 12.2.0. O Docker Compose instala as dependências dentro do container e inicia a API em modo watch. O banco continua sendo o PostgreSQL remoto no Neon.
+
+1. Instale e inicie o Docker Desktop.
+2. Crie seu arquivo local de ambiente a partir do modelo:
+
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+3. Preencha no `.env` as configurações necessárias, incluindo a conexão com o Neon e `JWT_SECRET`. Não versione esse arquivo.
+4. Na raiz do projeto, inicie a API:
+
+   ```powershell
+   docker compose up --build
+   ```
+
+5. A API estará disponível em `http://localhost:3000/v1/api`. O código local é montado no container, então alterações são recarregadas pelo Nest.
+6. Para encerrar, use `Ctrl+C` e depois:
+
+   ```powershell
+   docker compose down
+   ```
+
+O primeiro build baixa a imagem do Node e instala as dependências. O `.nvmrc` também informa a versão do Node para quem preferir executar a aplicação sem Docker.
