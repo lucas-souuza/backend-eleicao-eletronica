@@ -157,3 +157,21 @@ O projeto usa Node.js 26.13.0 e npm 12.2.0. O Docker Compose instala as dependê
    ```
 
 O primeiro build baixa a imagem do Node e instala as dependências. O `.nvmrc` também informa a versão do Node para quem preferir executar a aplicação sem Docker.
+
+
+## Documentação da API (Swagger)
+
+A documentação é gerada pelo `@nestjs/swagger` a partir dos decorators nos controllers e DTOs.
+
+Com a API rodando:
+
+- Swagger UI: `http://localhost:3000/docs`
+- OpenAPI em JSON: `http://localhost:3000/docs-json`
+
+Para testar rotas protegidas, faça login em `POST /v1/api/auth/login`, copie o `access_token` e cole no botão **Authorize**.
+
+Onde fica a configuração:
+
+- `src/common/swagger/swagger.config.ts`: título, descrição, autenticação Bearer e tags (chamado no `main.ts`).
+- `src/common/swagger/api-respostas.decorator.ts`: decorators reutilizáveis para as respostas de erro (400, 401, 403, 404, 409).
+- `src/modules/*/dto/*-resposta.dto.ts`: formato das respostas de cada rota (usados só na documentação).
