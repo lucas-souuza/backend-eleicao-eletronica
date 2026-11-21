@@ -54,6 +54,7 @@ export class EleitorService {
 
         // Nunca devolva a senha ou o hash pela API.
         return {
+          id: eleitorSalvo.id,
           nome: eleitorSalvo.nome,
           email: usuarioSalvo.email,
           criadoEm: eleitorSalvo.criadoEm,
