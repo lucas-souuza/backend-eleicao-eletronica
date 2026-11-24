@@ -7,7 +7,7 @@ import { AppModule } from './../src/app.module';
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -16,14 +16,33 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
+  it('GET / deve retornar 200 com Hello World!', () => {
     return request(app.getHttpServer())
       .get('/')
       .expect(200)
       .expect('Hello World!');
   });
 
-  afterEach(async () => {
+  it('GET / deve retornar um content-type HTML textual', async () => {
+    const response = await request(app.getHttpServer()).get('/');
+
+    expect(response.headers['content-type']).toContain('text/html');
+  });
+
+  it('GET /rota-inexistente deve retornar 404', () => {
+    return request(app.getHttpServer())
+      .get('/rota-inexistente')
+      .expect(404);
+  });
+
+  it('POST / deve retornar 404', () => {
+    return request(app.getHttpServer())
+      .post('/')
+      .send({ nome: 'Teste' })
+      .expect(404);
+  });
+
+  afterAll(async () => {
     await app.close();
   });
 });
