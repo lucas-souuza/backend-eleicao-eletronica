@@ -21,6 +21,7 @@ import { SituacaoEleicao } from '../src/modules/situacao-eleicao/entities/situac
 import { Usuario } from '../src/modules/usuario/entities/usuario.entity';
 import { Voto } from '../src/modules/voto/entities/voto.entity';
 import { VotoModule } from '../src/modules/voto/voto.module';
+import { ResultadoModule } from '../src/modules/resultado/resultado.module';
 import {
   createE2eConfigModule,
   createE2eDatabaseModule,
@@ -60,6 +61,7 @@ describe('VotoController (e2e)', () => {
         createE2eDatabaseModule(),
         AuthModule,
         VotoModule,
+        ResultadoModule,
       ],
     }).compile();
 
@@ -253,5 +255,53 @@ describe('VotoController (e2e)', () => {
         where: { candidatura: { id: fixture.candidatura.id } },
       }),
     ).toBe(1);
+
+    const resultadoParcial = await request(getHttpServer())
+      .get(`/v1/api/eleicoes/${fixture.eleicao.id}/resultados`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(resultadoParcial.body.eleicaoId).toBe(fixture.eleicao.id);
+    expect(resultadoParcial.body.situacao).toBe('ABERTA');
+
+    const candidaturaParcial = resultadoParcial.body.resultados.find(
+      (resultado: { candidaturaId: string }) =>
+        resultado.candidaturaId === fixture!.candidatura.id,
+    );
+    expect(candidaturaParcial).toBeDefined();
+    expect(candidaturaParcial.totalVotos).toBe('1');
+
+    const situacaoRepository = moduleFixture
+      .get<DataSource>(DataSource)
+      .getRepository(SituacaoEleicao);
+    let situacaoEncerrada = await situacaoRepository.findOneBy({
+      nome: 'ENCERRADA',
+    });
+    if (!situacaoEncerrada) {
+      situacaoEncerrada = await situacaoRepository.save({
+        nome: 'ENCERRADA',
+        descricao: 'Votação encerrada para teste.',
+      });
+    }
+
+    fixture.eleicao.situacao = situacaoEncerrada;
+    await moduleFixture
+      .get<DataSource>(DataSource)
+      .getRepository(Eleicao)
+      .save(fixture.eleicao);
+
+    const resultadoFinal = await request(getHttpServer())
+      .get(`/v1/api/eleicoes/${fixture.eleicao.id}/resultados`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(resultadoFinal.body.situacao).toBe('ENCERRADA');
+
+    const candidaturaFinal = resultadoFinal.body.resultados.find(
+      (resultado: { candidaturaId: string }) =>
+        resultado.candidaturaId === fixture!.candidatura.id,
+    );
+    expect(candidaturaFinal).toBeDefined();
+    expect(candidaturaFinal.totalVotos).toBe('1');
   });
 });
