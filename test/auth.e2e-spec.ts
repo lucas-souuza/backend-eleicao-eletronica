@@ -1,51 +1,21 @@
-import 'dotenv/config';
-
 import { INestApplication } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { getRepositoryToken, TypeOrmModule } from '@nestjs/typeorm';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
 import * as bcrypt from 'bcryptjs';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { Repository } from 'typeorm';
 import { AuthModule } from '../src/modules/auth/auth.module';
-import { Candidato } from '../src/modules/candidato/entities/candidato.entity';
-import { Eleitor } from '../src/modules/eleitor/entities/eleitor.entity';
 import { Perfil } from '../src/modules/perfil/entities/perfil.entity';
 import { Usuario } from '../src/modules/usuario/entities/usuario.entity';
+import {
+  createE2eConfigModule,
+  createE2eDatabaseModule,
+} from './e2e-test-database';
 
-const JWT_TEST_SECRET = 'e2e-only-secret';
 const TEST_EMAIL = 'auth-e2e@example.test';
 const TEST_PASSWORD = 'Senha-de-teste-123';
 const TEST_PROFILE = 'ELEITOR';
-
-function getTestDatabaseUrl(): string {
-  const databaseUrl = process.env.TEST_DATABASE_URL;
-
-  if (!databaseUrl) {
-    throw new Error(
-      'Defina TEST_DATABASE_URL para um banco PostgreSQL exclusivo de testes.',
-    );
-  }
-
-  let databaseName: string;
-
-  try {
-    databaseName = decodeURIComponent(new URL(databaseUrl).pathname)
-      .replace(/^\/+/, '')
-      .toLowerCase();
-  } catch {
-    throw new Error('TEST_DATABASE_URL deve ser uma URL PostgreSQL válida.');
-  }
-
-  if (!/(^|[_-])test$/.test(databaseName)) {
-    throw new Error(
-      'O nome do banco em TEST_DATABASE_URL deve terminar em "_test" ou "-test"; nenhum banco foi acessado.',
-    );
-  }
-
-  return databaseUrl;
-}
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication<App> | undefined;
@@ -61,24 +31,8 @@ describe('AuthController (e2e)', () => {
   }
 
   beforeAll(async () => {
-    const databaseUrl = getTestDatabaseUrl();
-
     moduleFixture = await Test.createTestingModule({
-      imports: [
-        ConfigModule.forRoot({
-          isGlobal: true,
-          ignoreEnvFile: true,
-          load: [() => ({ JWT_SECRET: JWT_TEST_SECRET })],
-        }),
-        TypeOrmModule.forRoot({
-          type: 'postgres',
-          url: databaseUrl,
-          ssl: process.env.TEST_DATABASE_SSL === 'true',
-          entities: [Usuario, Perfil, Eleitor, Candidato],
-          synchronize: true,
-        }),
-        AuthModule,
-      ],
+      imports: [createE2eConfigModule(), createE2eDatabaseModule(), AuthModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
