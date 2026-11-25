@@ -1,177 +1,103 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Sistema de Eleição Eletrônica
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Sistema web para gerenciamento de eleições, inscrições de eleitores, candidaturas, votação e apuração de resultados.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Entregáveis
 
-## Description
+- **Repositório Git:** [GitHub](https://github.com/lucas-souuza/backend-eleicao-eletronica/tree/develop)
+- **Documentação da API (Swagger):** disponível em `http://localhost:3000/docs`
+- **Integrantes:** Cristiano Reis, Gabriel Viola, Guilherme Roupe, Lucas Martins
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+> O endereço local do Swagger, como `http://localhost:3000/docs`, funciona apenas para quem está executando a API na própria máquina.
 
-## Project setup
+## Arquitetura
 
-```bash
-$ npm install
-```
+A aplicação utiliza uma arquitetura de **monólito modular** com NestJS. O sistema é executado como uma aplicação, mas seu código é dividido em módulos por responsabilidade do domínio. Cada módulo pode concentrar entidades, regras de negócio, serviços e endpoints relacionados à sua funcionalidade.
 
-## Compile and run the project
+A API utiliza PostgreSQL como banco de dados e TypeORM para mapeamento das entidades e execução das migrations. As alterações de estrutura do banco são controladas por migrations; a sincronização automática de entidades está desativada (`synchronize: false`).
 
-```bash
-# development
-$ npm run start
+A autenticação utiliza JWT. O perfil do usuário determina o acesso às operações protegidas. A aplicação conecta-se ao PostgreSQL hospedado no Neon.
 
-# watch mode
-$ npm run start:dev
+## Modularização
 
-# production mode
-$ npm run start:prod
-```
+Os módulos representam as principais áreas funcionais do sistema:
 
-## Run tests
+- **Auth:** autenticação, emissão de token e identificação do usuário autenticado.
+- **Usuario e Perfil:** contas de acesso e seus perfis.
+- **Eleitor:** cadastro e dados dos eleitores.
+- **Candidato:** cadastro e dados dos candidatos.
+- **Eleicao e SituacaoEleicao:** eleições e seus estados, incluindo abertura e encerramento.
+- **Cargo e Partido:** cargos em disputa e partidos.
+- **InscricaoEleitor:** vínculo de eleitores com eleições.
+- **Candidatura:** associação de candidato, eleição, cargo e partido, incluindo o número eleitoral.
+- **Voto:** registro da escolha computada para uma candidatura.
+- **ControleVotacao:** registro usado para controlar a participação do eleitor por eleição e cargo.
+- **Apuração/Resultados:** consulta da quantidade de votos computados para as candidaturas.
 
-```bash
-# unit tests
-$ npm run test
+## Modelagem do banco de dados
 
-# e2e tests
-$ npm run test:e2e
+As tabelas usam nomes no plural, enquanto as classes e entidades TypeScript usam nomes no singular. As chaves primárias são do tipo `BIGINT` no PostgreSQL e são representadas como `string` no TypeScript para evitar perda de precisão.
 
-# test coverage
-$ npm run test:cov
-```
+Principais relações:
 
-## Deployment
+- Um perfil pode estar associado a vários usuários.
+- Um usuário pode estar associado a um cadastro de eleitor ou de candidato.
+- Uma eleição possui uma situação.
+- Uma inscrição associa um eleitor a uma eleição.
+- Uma candidatura associa candidato, eleição, cargo e partido.
+- Um voto referencia a candidatura que recebeu o voto.
+- O controle de votação associa eleitor, eleição e cargo para impedir que o mesmo eleitor vote mais de uma vez no mesmo cargo daquela eleição.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Para preservar a separação entre participação e escolha, a tabela `votos` não possui relacionamento direto com `eleitores`. A tabela `controles_votacao` registra a participação, enquanto `votos` permite a apuração por candidatura.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Restrições de unicidade no banco protegem regras como e-mail, CPF, título eleitoral, número eleitoral por eleição e cargo, inscrição e voto duplicados, conforme definido no esquema e nas migrations.
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+## Tecnologias
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+- Node.js 26.13.0
+- npm 12.2.0
+- NestJS
+- TypeScript
+- TypeORM
+- PostgreSQL
+- JWT
+- Docker e Docker Compose
 
-## Observability
+## Executar localmente com Docker
 
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
+1. Clone o repositório:
 
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
+   ```bash
+   git clone https://github.com/lucas-souuza/backend-eleicao-eletronica.git
+   cd backend-eleicao-eletronica
+   ```
 
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-To add it to this project, run this and approve the code it prints at [observe.nestjs.com/link](https://observe.nestjs.com/link) - signing up for free if you have no account:
-
-```bash
-$ npx @nestjs/observe link
-```
-
-It installs `@nestjs/observe`, wires it into `AppModule` and `main.ts`, and writes the app key and secret into `.env`, which every `nest start` script (`start`, `start:dev`, `start:debug`) then loads. In production, set `OBSERVE_APP_KEY` and `OBSERVE_APP_SECRET` in the environment instead.
-
-Or do it by hand:
-
-```bash
-$ npm install @nestjs/observe
-```
-
-Then follow the [setup guide](https://docs.nestjs.com/observability/sdk) - it takes a single import and an app key.
-
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
-
-## Docker para desenvolvimento
-
-O projeto usa Node.js 26.13.0 e npm 12.2.0. O Docker Compose instala as dependências dentro do container e inicia a API em modo watch. O banco continua sendo o PostgreSQL remoto no Neon.
-
-1. Instale e inicie o Docker Desktop.
-2. Crie seu arquivo local de ambiente a partir do modelo:
+2. Crie o arquivo de ambiente local:
 
    ```powershell
    Copy-Item .env.example .env
    ```
 
-3. Preencha no `.env` as configurações necessárias, incluindo a conexão com o Neon e `JWT_SECRET`. Não versione esse arquivo.
-4. Na raiz do projeto, inicie a API:
+3. Preencha o `.env` com as configurações necessárias, como a URL do banco e o segredo JWT. **Não compartilhe nem versione esse arquivo.**
 
-   ```powershell
+4. Inicie a aplicação:
+
+   ```bash
    docker compose up --build
    ```
 
-5. A API estará disponível em `http://localhost:3000/v1/api`. O código local é montado no container, então alterações são recarregadas pelo Nest.
-6. Para encerrar, use `Ctrl+C` e depois:
+5. A API ficará disponível em `http://localhost:3000/v1/api`. A documentação Swagger ficará no caminho configurado em `src/main.ts`.
 
-   ```powershell
-   docker compose down
-   ```
+Para encerrar a aplicação:
 
-O primeiro build baixa a imagem do Node e instala as dependências. O `.nvmrc` também informa a versão do Node para quem preferir executar a aplicação sem Docker.
+```bash
+docker compose down
+```
 
+## Migrations
 
-## Documentação da API (Swagger)
+As migrations registram as mudanças no esquema do banco. Ao alterar a modelagem, crie uma nova migration e revise o arquivo gerado antes de aplicá-la ao banco.
 
-A documentação é gerada pelo `@nestjs/swagger` a partir dos decorators nos controllers e DTOs.
+## Testes
 
-Com a API rodando:
-
-- Swagger UI: `http://localhost:3000/docs`
-- OpenAPI em JSON: `http://localhost:3000/docs-json`
-
-Para testar rotas protegidas, faça login em `POST /v1/api/auth/login`, copie o `access_token` e cole no botão **Authorize**.
-
-Onde fica a configuração:
-
-- `src/common/swagger/swagger.config.ts`: título, descrição, autenticação Bearer e tags (chamado no `main.ts`).
-- `src/common/swagger/api-respostas.decorator.ts`: decorators reutilizáveis para as respostas de erro (400, 401, 403, 404, 409).
-- `src/modules/*/dto/*-resposta.dto.ts`: formato das respostas de cada rota (usados só na documentação).
+Os fluxos da API foram verificados manualmente durante o desenvolvimento. [Adicionar aqui os testes automatizados quando forem implementados.]
