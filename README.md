@@ -5,10 +5,10 @@ Sistema web para gerenciamento de eleições, inscrições de eleitores, candida
 ## Entregáveis
 
 - **Repositório Git:** [GitHub](https://github.com/lucas-souuza/backend-eleicao-eletronica/tree/develop)
-- **Documentação da API (Swagger):** disponível em `http://localhost:3000/docs`
+- **Documentação da API (Swagger):** [GitHub Pages](https://lucas-souuza.github.io/backend-eleicao-eletronica/)
 - **Integrantes:** Cristiano Reis, Gabriel Viola, Guilherme Roupe, Lucas Martins
 
-> O endereço local do Swagger, como `http://localhost:3000/docs`, funciona apenas para quem está executando a API na própria máquina.
+> O endereço local do Swagger funcionando com o try out, bearer token e execute, como `http://localhost:3000/docs`, funciona apenas para quem está executando a API na própria máquina.
 
 ## Arquitetura
 
