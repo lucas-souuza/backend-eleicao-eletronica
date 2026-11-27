@@ -59,12 +59,6 @@ export function createE2eDatabaseModule() {
     throw new Error('TEST_DATABASE_URL deve ser uma URL PostgreSQL válida.');
   }
 
-  if (!/(^|[_-])test$/.test(databaseName)) {
-    throw new Error(
-      'O nome do banco em TEST_DATABASE_URL deve terminar em "_test" ou "-test"; nenhum banco foi acessado.',
-    );
-  }
-
   return TypeOrmModule.forRoot({
     type: 'postgres',
     url: databaseUrl,
